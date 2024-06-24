@@ -20,7 +20,7 @@ class KeycloakDio {
 
   static late String _tokenPath;
 
-  static String get ssoUrl => "${_baseUrl}/realms/${_realm}";
+  static String get ssoUrl => "$_baseUrl/realms/$_realm";
   static String get refreshPath => _refreshPath;
 
   static Future<void> init({
@@ -109,7 +109,6 @@ class KeycloakDio {
 
   static Future<UserInfo> authorizeBrowser(
       {List<String> scopes = const ['openid']}) async {
-    // create the client
     var issuer = await Issuer.discover(Uri.parse(ssoUrl));
     var client = Client(issuer, _clientId);
     final prefs = await SharedPreferences.getInstance();
@@ -123,22 +122,17 @@ class KeycloakDio {
       }
     }
 
-    // create an authenticator
     var authenticator = Authenticator(client,
         scopes: scopes, port: 4000, urlLancher: urlLauncher);
 
-    // starts the authentication
     var c = await authenticator.authorize();
 
-    // close the webview when finished
     closeInAppWebView();
 
     prefs.setString(
         _tokenPath, (await c.getTokenResponse()).accessToken ?? "null");
     prefs.setString(_refreshPath, c.refreshToken ?? "null");
 
-    _log.info(issuer.metadata.userinfoEndpoint);
-    // return the user info
     return await c.getUserInfo();
   }
 }
